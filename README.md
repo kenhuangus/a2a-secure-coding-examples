@@ -1,6 +1,6 @@
 # Secure Coding Practices for A2A Applications
 
-This repository provides reference implementations of secure coding patterns for [Google A2A](https://github.com/google/A2A)applications, following the [Maestro](https://cloudsecurityalliance.org/blog/2025/02/06/agentic-ai-threat-modeling-framework-maestro) framework. Each example demonstrates how to mitigate common security threats in multi-agent systems. The code snippets are organized by security topic and can be used as a starting point for your own implementation.
+This repository provides reference code snippets of secure coding patterns for [Google A2A](https://github.com/google/A2A)applications, following the [Maestro](https://cloudsecurityalliance.org/blog/2025/02/06/agentic-ai-threat-modeling-framework-maestro) framework. Each example demonstrates how to mitigate common security threats in multi-agent systems. The code snippets are organized by security topic and can be used as a starting point for your own implementation.
 
 ## Secure Coding Examples
 
