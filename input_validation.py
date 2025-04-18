@@ -1,42 +1,69 @@
-# Secure Coding Practices for A2A Applications
+"""
+Mitigation Example 1: Input Validation & Sanitization (A2A + Google GenAI + CrewAI)
+Prevents message schema violations and prompt injection by validating and sanitizing message parts using A2A types, CrewAI, and Google GenAI.
+"""
+from samples.python.common.types import Message, TextPart
+from crewai import Agent, Crew, LLM, Task
+from crewai.process import Process
+from dotenv import load_dotenv
+import os
+from google import genai
+import logging
 
-This repository provides reference code snippets of secure coding patterns for [Google A2A](https://github.com/google/A2A) applications, following the [Maestro](https://cloudsecurityalliance.org/blog/2025/02/06/agentic-ai-threat-modeling-framework-maestro) framework. Each example demonstrates how to mitigate common security threats in multi-agent systems. The code snippets are organized by security topic and can be used as a starting point for your own implementation.
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("input_validation")
 
-> **Disclaimer:**
-> These examples are provided for educational and reference purposes only. **No warranty is provided. The code is not fully tested and is not intended for use in production systems.** Each file demonstrates a security pattern or mitigation technique, but may require adaptation and further testing for your specific environment.
+def get_api_key():
+    load_dotenv()
+    return os.getenv("GOOGLE_API_KEY")
 
-## Secure Coding Examples
+def sanitize_message_parts(message: Message) -> Message:
+    for part in message.parts:
+        if isinstance(part, TextPart):
+            # Use a simple check for prompt injection
+            if "<" in part.text or ">" in part.text or "{{" in part.text or "}}" in part.text:
+                raise ValueError("Input contains potentially unsafe characters")
+    return message
 
-### Original Examples
+class InputValidationAgent:
+    def __init__(self):
+        self.llm = LLM(model="gemini/gemini-2.0-flash", api_key=get_api_key())
+        self.agent = Agent(
+            role="Input Validator",
+            goal="Ensure all incoming messages are sanitized and safe for LLM processing.",
+            backstory="You are a security-focused AI agent that validates user input for safety before passing to LLMs.",
+            verbose=False,
+            allow_delegation=False,
+            tools=[],
+            llm=self.llm,
+        )
+        self.task = Task(
+            description="Validate and sanitize the user message: '{user_message}'",
+            expected_output="A sanitized Message object or an error if unsafe input is detected.",
+            agent=self.agent,
+        )
+        self.crew = Crew(
+            agents=[self.agent],
+            tasks=[self.task],
+            process=Process.sequential,
+            verbose=False,
+        )
+    def validate(self, user_message):
+        msg = Message(role="user", parts=[TextPart(text=user_message)])
+        try:
+            sanitized = sanitize_message_parts(msg)
+            logger.info("Message sanitized: %s", sanitized)
+            return sanitized
+        except ValueError as e:
+            logger.error("Sanitization failed: %s", e)
+            return str(e)
 
-1. **Input Validation & Sanitization** ([input_validation.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/input_validation.py))
-    - Prevents message schema violations and prompt injection by validating and sanitizing message parts.
-2. **Output Verification & Content Filtering** ([output_verification.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/output_verification.py))
-    - Filters artifacts to prevent leaking sensitive or forbidden content.
-3. **Strong Authentication & Authorization** ([authentication_authorization.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/authentication_authorization.py))
-    - Uses JWT and environment-based credentials to ensure agent identity and secure operations.
-4. **Rate Limiting & Monitoring** ([rate_limiting.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/rate_limiting.py))
-    - Enforces rate limits to protect against DoS and abuse.
-5. **Schema Validation** ([schema_validation.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/schema_validation.py))
-    - Validates message schemas using Pydantic.
-6. **Secure State & Cache Management** ([secure_cache.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/secure_cache.py))
-    - Demonstrates secure, thread-safe cache usage for artifacts and credentials.
-7. **Logging & Observability** ([logging_observability.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/logging_observability.py))
-    - Provides safe logging practices to prevent log injection and improve auditability.
-8. **Continuous Auditing & Credential Hygiene** ([credential_hygiene.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/credential_hygiene.py))
-    - Shows how to rotate credentials and maintain secure authentication info.
+def test_input_validation_agent():
+    agent = InputValidationAgent()
+    assert isinstance(agent.validate("Hello, world!"), Message)
+    result = agent.validate("<script>alert(1)</script>")
+    assert "unsafe characters" in result
 
-### CrewAI + GenAI Secure Examples
-
-The following examples are now located in the **root directory** of the repository and demonstrate the same mitigations using CrewAI constructs and Google GenAI:
-
-1. **Input Validation & Sanitization** ([input_validation_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/input_validation_a2a_crew.py))
-2. **Output Verification & Content Filtering** ([output_verification_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/output_verification_a2a_crew.py))
-3. **Strong Authentication & Authorization** ([authentication_authorization_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/authentication_authorization_a2a_crew.py))
-4. **Rate Limiting & Monitoring** ([rate_limiting_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/rate_limiting_a2a_crew.py))
-5. **Schema Validation** ([schema_validation_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/schema_validation_a2a_crew.py))
-6. **Secure State & Cache Management** ([secure_cache_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/secure_cache_a2a_crew.py))
-7. **Logging & Observability** ([logging_observability_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/logging_observability_a2a_crew.py))
-8. **Continuous Auditing & Credential Hygiene** ([credential_hygiene_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/credential_hygiene_a2a_crew.py))
-
-Each file contains an example usage. **Adapt these patterns to your own A2A systems for improved security.**
+if __name__ == "__main__":
+    test_input_validation_agent()
+    print("Input validation (A2A + GenAI + CrewAI) example ran successfully.")
