@@ -26,9 +26,9 @@ This repository provides reference code snippets of secure coding patterns for [
 8. **Continuous Auditing & Credential Hygiene** ([credential_hygiene.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/credential_hygiene.py))
     - Shows how to rotate credentials and maintain secure authentication info.
 
-### CrewAI + GenAI Secure Examples
+### A2A+ CrewAI Secure Examples
 
-The following examples are now located in the **root directory** of the repository and demonstrate the same mitigations using CrewAI constructs and Google GenAI:
+The following examples demonstrate the mitigation strategy using CrewAI constructs and Google A2A:
 
 1. **Input Validation & Sanitization** ([input_validation_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/input_validation_a2a_crew.py))
 2. **Output Verification & Content Filtering** ([output_verification_a2a_crew.py](https://github.com/kenhuangus/a2a-secure-coding-examples/blob/master/output_verification_a2a_crew.py))
